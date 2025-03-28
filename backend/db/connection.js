@@ -1,4 +1,4 @@
-const mysql = require('mysql');
+const mysql = require('mysql2');
 
 const pool = mysql.createPool({
     host: 'localhost',
@@ -9,13 +9,5 @@ const pool = mysql.createPool({
     connectionLimit: 10
 });
 
-pool.getConnection((err, connection) => {
-    if (err) {
-        console.error('Error al conectar con la base de datos:', err);
-        return;
-    }
-    console.log('Conexión exitosa a la base de datos.');
-    connection.release();
-});
-
-module.exports = { pool };
+// Exportar el pool usando promesas
+module.exports = pool.promise();

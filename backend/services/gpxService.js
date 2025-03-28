@@ -1,75 +1,89 @@
 const fs = require('fs');
-const path = require('path');
-const { DOMParser } = require('@xmldom/xmldom');
-const togeojson = require('@tmcw/togeojson');
-const geolib = require('geolib'); // Para cálculos de distancia
+const { XMLParser } = require('fast-xml-parser');
+const geolib = require('geolib');
 
-/**
- * Función para procesar un archivo GPX y extraer datos útiles
- * @param {string} fileName - Nombre del archivo GPX en la carpeta 'uploads'
- * @returns {Object} { puntos: [...], stats: {...} }
- */
-const parseGPX = async (fileName) => {
-    try {
-        const filePath = path.join(__dirname, '../uploads/', fileName);
-        const data = fs.readFileSync(filePath, 'utf8');
+exports.parseGPX = async (filePath) => {
+  const gpxData = await fs.promises.readFile(filePath, 'utf-8');
+  const parser = new XMLParser({ ignoreAttributes: false });
+  const jsonObj = parser.parse(gpxData);
 
-        // Convertir GPX a JSON con @tmcw/togeojson
-        const doc = new DOMParser().parseFromString(data, 'text/xml'); // 🔹 Corrección del MIME type
-        const geojson = togeojson.gpx(doc);
+  if (!jsonObj.gpx || !jsonObj.gpx.trk || !jsonObj.gpx.trk.trkseg || !jsonObj.gpx.trk.trkseg.trkpt) {
+    throw new Error('Archivo GPX sin puntos válidos');
+  }
 
-        // Validar que el archivo tenga la estructura esperada
-        if (!geojson.features || geojson.features.length === 0) {
-            throw new Error('El archivo GPX no contiene puntos válidos');
-        }
+  const trackpoints = jsonObj.gpx.trk.trkseg.trkpt;
+  const puntos = [];
+  let distancia_km = 0;
+  let altitudes = [];
+  let tiempos = [];
+  let paradas_detectadas = 0;
 
-        // Obtener los puntos
-        const puntos = geojson.features.map(feature => ({
-            latitud: feature.geometry.coordinates[1],
-            longitud: feature.geometry.coordinates[0],
-            altitud: feature.geometry.coordinates[2] || 0,
-            tiempo: feature.properties.time || null
-        }));
+  let prevPoint = null;
 
-        // Calcular estadísticas del trayecto
-        const stats = calcularEstadisticas(puntos);
+  trackpoints.forEach((trkpt, index) => {
+    const latitud = parseFloat(trkpt['@_lat']);
+    const longitud = parseFloat(trkpt['@_lon']);
+    const altitud = trkpt.ele ? parseFloat(trkpt.ele) : 0;
+    const tiempo = trkpt.time ? new Date(trkpt.time).toISOString().slice(0, 19).replace('T', ' ') : null;
 
-        return { puntos, stats };
-    } catch (error) {
-        console.error('Error al procesar el archivo GPX:', error);
-        throw new Error('No se pudo procesar el archivo GPX');
+    puntos.push({ latitud, longitud, altitud, tiempo });
+
+    if (altitud) altitudes.push(altitud);
+    if (tiempo) tiempos.push(new Date(trkpt.time));
+
+    if (prevPoint) {
+      const distancia = geolib.getDistance(
+        { latitude: prevPoint.latitud, longitude: prevPoint.longitud },
+        { latitude: latitud, longitude: longitud }
+      );
+
+      const tiempo_diff = (new Date(trkpt.time) - new Date(prevPoint.tiempo)) / 1000;
+      const velocidad = tiempo_diff > 0 ? (distancia / tiempo_diff) * 3.6 : 0; // km/h
+
+      if (velocidad <= 1 && tiempo_diff >= 30) {
+        paradas_detectadas += 1;
+      }
+
+      distancia_km += distancia / 1000;
     }
+
+    prevPoint = { latitud, longitud, tiempo: trkpt.time };
+  });
+
+  const formatMySQLTime = (date) => date.toISOString().slice(11, 19);
+  const formatMySQLDate = (date) => date.toISOString().slice(0, 10);
+
+  const fecha = tiempos.length ? formatMySQLDate(tiempos[0]) : null;
+  const hora_inicio = tiempos.length ? formatMySQLTime(tiempos[0]) : null;
+  const hora_fin = tiempos.length ? formatMySQLTime(tiempos[tiempos.length - 1]) : null;
+
+  const tiempo_total = hora_inicio && hora_fin
+    ? Math.round((new Date(tiempos[tiempos.length - 1]) - new Date(tiempos[0])) / 1000)
+    : 0;
+
+  const duracion_minutos = Math.round(tiempo_total / 60);
+
+  const velocidad_promedio = duracion_minutos
+    ? distancia_km / (duracion_minutos / 60)
+    : 0;
+
+  const altitud_max = altitudes.length ? Math.max(...altitudes) : 0;
+  const altitud_min = altitudes.length ? Math.min(...altitudes) : 0;
+
+  return {
+    puntos,
+    stats: {
+      distancia_km: +distancia_km.toFixed(3),
+      distancia_total: +distancia_km.toFixed(3),
+      duracion_minutos,
+      tiempo_total,
+      velocidad_promedio: +velocidad_promedio.toFixed(2),
+      altitud_max,
+      altitud_min,
+      fecha,
+      hora_inicio,
+      hora_fin,
+      paradas_detectadas,
+    },
+  };
 };
-
-/**
- * Calcula estadísticas básicas de un trayecto GPX
- * @param {Array} puntos - Lista de puntos del trayecto
- * @returns {Object} { distancia_km, duracion_minutos, velocidad_promedio, altitud_max, altitud_min }
- */
-const calcularEstadisticas = (puntos) => {
-    // Calcular distancia total en kilómetros
-    let distancia_km = 0;
-    for (let i = 1; i < puntos.length; i++) {
-        distancia_km += geolib.getDistance(
-            { latitude: puntos[i - 1].latitud, longitude: puntos[i - 1].longitud },
-            { latitude: puntos[i].latitud, longitude: puntos[i].longitud }
-        );
-    }
-    distancia_km /= 1000; // Convertir a kilómetros
-
-    // Calcular duración en minutos
-    const inicio = new Date(puntos[0].tiempo);
-    const fin = new Date(puntos[puntos.length - 1].tiempo);
-    const duracion_minutos = (fin - inicio) / (1000 * 60); // Convertir a minutos
-
-    // Calcular velocidad promedio en km/h
-    const velocidad_promedio = (distancia_km / duracion_minutos) * 60 || 0;
-
-    // Calcular altitud máxima y mínima
-    const altitud_max = Math.max(...puntos.map(p => p.altitud));
-    const altitud_min = Math.min(...puntos.map(p => p.altitud));
-
-    return { distancia_km, duracion_minutos, velocidad_promedio, altitud_max, altitud_min };
-};
-
-module.exports = { parseGPX };

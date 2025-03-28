@@ -1,84 +1,75 @@
+const fs = require('fs');
+const util = require('util');
+const mysql = require('../db/connection');
 const { parseGPX } = require('../services/gpxService');
-const { pool } = require('../db/connection');
-const multer = require('multer');
 
-// Configuración de multer para manejar la carga de archivos
-const upload = multer({ dest: 'uploads/' }).single('archivo');
+const unlinkFile = util.promisify(fs.unlink);
 
-// Función para formatear el tiempo
-const formatTime = (time) => {
-    return new Date(time).toISOString().slice(0, 19).replace('T', ' ');
-};
+exports.uploadGPX = async (req, res) => {
+  const { id_trayecto } = req.body;
+  let connection;
 
-const uploadGPX = async (req, res) => {
-    const { id_trayecto } = req.body;
+  if (!req.file || !id_trayecto) {
+    return res.status(400).json({ error: 'Archivo GPX e ID del trayecto son requeridos' });
+  }
 
-    // Verificar si se subió un archivo
-    if (!req.file) {
-        return res.status(400).json({ mensaje: 'Archivo GPX es requerido' });
+  const filePath = `uploads/${req.file.filename}`;
+
+  try {
+    const { puntos, stats } = await parseGPX(filePath);
+
+    connection = await mysql.getConnection();
+    await connection.beginTransaction();
+
+    const [resultTrayecto] = await connection.execute(
+      `INSERT INTO gpx_trayectos 
+        (id_trayecto, distancia_km, distancia_total, duracion_minutos, tiempo_total, velocidad_promedio, altitud_max, altitud_min, fecha, hora_inicio, hora_fin, paradas_detectadas, fecha_subida, nombre_archivo) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?)`,
+      [
+        id_trayecto,
+        stats.distancia_km,
+        stats.distancia_total,
+        stats.duracion_minutos,
+        stats.tiempo_total,
+        stats.velocidad_promedio,
+        stats.altitud_max,
+        stats.altitud_min,
+        stats.fecha,
+        stats.hora_inicio,
+        stats.hora_fin,
+        stats.paradas_detectadas,
+        req.file.originalname,
+      ]
+    );
+
+    const id_gpx = resultTrayecto.insertId;
+
+    const puntosData = puntos.map(p => [
+      id_gpx,
+      p.latitud,
+      p.longitud,
+      p.altitud,
+      p.tiempo,
+    ]);
+
+    await connection.query(
+      'INSERT INTO gpx_puntos (gpx_id, latitud, longitud, elevacion, tiempo) VALUES ?',
+      [puntosData]
+    );
+
+    await connection.commit();
+    connection.release();
+
+    res.status(201).json({ mensaje: 'GPX procesado exitosamente', id_gpx });
+
+  } catch (error) {
+    console.error(error);
+    if (connection) {
+      await connection.rollback();
+      connection.release();
     }
-
-    try {
-        // Procesar el archivo GPX
-        const { puntos, stats } = await parseGPX(req.file.filename);
-
-        // Validar que se hayan extraído puntos
-        if (!puntos || puntos.length === 0) {
-            return res.status(400).json({ mensaje: 'El archivo GPX no contiene puntos válidos' });
-        }
-
-        // Insertar en la tabla gpx_trayectos
-        const queryTrayecto = `
-            INSERT INTO gpx_trayectos (id_trayecto, distancia_km, duracion_minutos, velocidad_promedio, fecha_subida)
-            VALUES (?, ?, ?, ?, NOW())
-        `;
-        pool.query(queryTrayecto, [id_trayecto, stats.distancia_km, stats.duracion_minutos, stats.velocidad_promedio], (error, result) => {
-            if (error) {
-                console.error('Error al insertar en gpx_trayectos:', error);
-                return res.status(500).json({ mensaje: 'Error al procesar GPX', error: error.message });
-            }
-
-            // Obtener el ID del GPX insertado
-            const id_gpx = result.insertId;
-
-            // Preparar los valores de los puntos para la inserción
-            const puntoValues = puntos.map(p => {
-                if (!p.latitud || !p.longitud || !p.tiempo) {
-                    throw new Error('El archivo GPX contiene puntos con valores faltantes');
-                }
-                return [
-                    id_gpx,                // gpx_id
-                    parseFloat(p.latitud),  // latitud (convertido a número)
-                    parseFloat(p.longitud), // longitud (convertido a número)
-                    parseFloat(p.altitud) || null, // elevacion (puede ser null)
-                    formatTime(p.tiempo)   // tiempo formateado
-                ];
-            });
-
-            // Verificar que todos los valores tienen el formato correcto
-            console.log("Valores a insertar:", JSON.stringify(puntoValues, null, 2));
-
-            // Construcción correcta de la consulta SQL
-            const queryPuntos = `
-                INSERT INTO gpx_puntos (gpx_id, latitud, longitud, elevacion, tiempo)
-                VALUES ?
-            `;
-
-            // Ejecutar la consulta SQL con múltiples registros
-            pool.query(queryPuntos, [puntoValues], (error, result) => {
-                if (error) {
-                    console.error('Error al insertar en gpx_puntos:', error);
-                    return res.status(500).json({ mensaje: 'Error al procesar GPX', error: error.message });
-                }
-
-                // Respuesta exitosa
-                res.status(201).json({ mensaje: 'GPX procesado correctamente', id_gpx });
-            });
-        });
-    } catch (error) {
-        console.error('Error al procesar GPX:', error);
-        res.status(500).json({ mensaje: 'Error al procesar GPX', error: error.message });
-    }
+    res.status(500).json({ error: 'Error al procesar GPX' });
+  } finally {
+    await unlinkFile(filePath);
+  }
 };
-
-module.exports = { uploadGPX };
