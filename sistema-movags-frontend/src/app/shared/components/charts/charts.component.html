@@ -1,0 +1,13 @@
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>Distribución de Medios de Transporte</mat-card-title>
+  </mat-card-header>
+
+  <mat-card-content>
+    <canvas baseChart
+      [data]="transporteData"
+      [options]="transporteOptions"
+      chartType="pie">
+    </canvas>
+  </mat-card-content>
+</mat-card>

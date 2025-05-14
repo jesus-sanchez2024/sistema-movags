@@ -1,0 +1,21 @@
+.tables-container {
+    padding: 16px;
+    border-radius: 12px;
+    background-color: #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  }
+  
+  table {
+    width: 100%;
+  }
+  
+  th.mat-header-cell {
+    background-color: #1976d2;
+    color: white;
+    font-weight: bold;
+  }
+  
+  td.mat-cell {
+    color: #555;
+  }
+  

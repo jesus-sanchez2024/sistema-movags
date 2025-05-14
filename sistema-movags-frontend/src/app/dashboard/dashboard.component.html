@@ -1,0 +1,219 @@
+<!---
+  <h1>Dashboard Movilidad Aguascalientes</h1>
+  <div id="map" style="height: 400px;"></div>
+
+  <canvas id="chartMedios"></canvas>
+  <canvas id="chartTiempos"></canvas>
+</div>
+<div class="container p-4 bg-gray-100">
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    
+    FILTROS 
+    <div class="col-span-3 bg-white shadow p-4 rounded-xl">
+      <mat-form-field class="w-full md:w-1/4">
+        <mat-label>Sector</mat-label>
+        <mat-select [(value)]="sector">
+          <mat-option value="all">Todos los sectores</mat-option>
+          <mat-option value="manufactura">Manufactura</mat-option>
+          <mat-option value="conocimiento">Conocimiento</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field class="w-full md:w-1/4">
+        <mat-label>Rango horario</mat-label>
+        <mat-select [(value)]="timeRange">
+          <mat-option value="today">Hoy</mat-option>
+          <mat-option value="week">Esta semana</mat-option>
+          <mat-option value="month">Este mes</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <button mat-raised-button color="primary" (click)="applyFilters()">Aplicar</button>
+    </div>
+
+   
+    <div class="lg:col-span-2 bg-white shadow rounded-xl p-4">
+      <app-map></app-map>
+    </div>
+
+   
+    <div class="bg-white shadow rounded-xl p-4 flex flex-col gap-2">
+      <h3 class="font-bold text-lg">Tiempo Promedio</h3>
+      <p class="text-xl font-semibold">32.5 min</p>
+
+      <h3 class="font-bold text-lg">Transporte Más Usado</h3>
+      <p class="text-xl font-semibold">Autobús Público</p>
+
+      <h3 class="font-bold text-lg">Horas Pico</h3>
+      <p class="text-xl font-semibold">8:00 - 9:30 AM</p>
+    </div>
+
+   
+    <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+      <app-charts></app-charts>
+    </div>
+
+    
+    <div class="col-span-3 bg-white shadow rounded-xl p-4">
+      <app-tables></app-tables>
+    </div>
+
+
+    <div class="col-span-3 bg-white shadow rounded-xl p-4">
+      <h3 class="font-bold">Insights y Recomendaciones</h3>
+      <mat-card class="mt-2">
+        <mat-card-content>
+          <ul>
+            <li>Optimizar horarios laborales para reducir congestión.</li>
+            <li>Fomentar transporte sustentable (ciclovías).</li>
+            <li>Añadir rutas exprés para mejorar eficiencia.</li>
+          </ul>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+  </div>
+</div>
+--->
+
+<div class="dashboard-container">
+  <!-- Header del Dashboard -->
+  <div class="dashboard-header">
+    <h1>Movilidad Aguascalientes</h1>
+    <div class="header-actions">
+      <button mat-icon-button class="notification-btn">
+        <mat-icon>notifications</mat-icon>
+      </button>
+      <div class="user-profile">
+        <span>Admin</span>
+        <mat-icon>account_circle</mat-icon>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filters-card">
+    <div class="filter-group">
+      <mat-form-field appearance="outline">
+        <mat-label>Sector</mat-label>
+        <mat-select [(value)]="sector">
+          <mat-option value="all">Todos los sectores</mat-option>
+          <mat-option value="manufactura">Manufactura</mat-option>
+          <mat-option value="conocimiento">Conocimiento</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="filter-group">
+      <mat-form-field appearance="outline">
+        <mat-label>Rango horario</mat-label>
+        <mat-select [(value)]="timeRange">
+          <mat-option value="today">Hoy</mat-option>
+          <mat-option value="week">Esta semana</mat-option>
+          <mat-option value="month">Este mes</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <button mat-raised-button class="apply-btn" (click)="applyFilters()">
+      <mat-icon>filter_alt</mat-icon>
+      Aplicar Filtros
+    </button>
+  </div>
+
+  <!-- Contenido principal -->
+  <div class="dashboard-content">
+    <!-- Mapa y Estadísticas -->
+    <div class="main-section">
+      <div class="map-container">
+        <h2 class="section-title">
+          <mat-icon>map</mat-icon>
+          Mapa de Movilidad
+        </h2>
+        <app-map></app-map>
+      </div>
+
+      <div class="stats-container">
+        <h2 class="section-title">
+          <mat-icon>insights</mat-icon>
+          Indicadores Clave
+        </h2>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">
+              <mat-icon>schedule</mat-icon>
+            </div>
+            <div class="stat-content">
+              <h3>Tiempo Promedio</h3>
+              <p class="stat-value">32.5 <span>min</span></p>
+              <p class="stat-trend positive">↓ 12% vs ayer</p>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon">
+              <mat-icon>directions_bus</mat-icon>
+            </div>
+            <div class="stat-content">
+              <h3>Transporte Más Usado</h3>
+              <p class="stat-value">Autobús Público</p>
+              <p class="stat-trend neutral">→ 0% cambio</p>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon">
+              <mat-icon>access_time</mat-icon>
+            </div>
+            <div class="stat-content">
+              <h3>Horas Pico</h3>
+              <p class="stat-value">8:00 - 9:30 AM</p>
+              <p class="stat-trend negative">↑ 18% congestión</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="charts-section">
+      <h2 class="section-title">
+        <mat-icon>bar_chart</mat-icon>
+        Análisis de Movilidad
+      </h2>
+      <app-charts></app-charts>
+    </div>
+
+    <!-- Tablas y Recomendaciones -->
+    <div class="bottom-section">
+      <div class="tables-container">
+        <h2 class="section-title">
+          <mat-icon>table_chart</mat-icon>
+          Datos Detallados
+        </h2>
+        <app-tables></app-tables>
+      </div>
+
+      <div class="recommendations-container">
+        <h2 class="section-title">
+          <mat-icon>lightbulb</mat-icon>
+          Recomendaciones Inteligentes
+        </h2>
+        <div class="recommendations-list">
+          <div class="recommendation-card">
+            <mat-icon>schedule</mat-icon>
+            <p>Optimizar horarios laborales para reducir congestión</p>
+          </div>
+          <div class="recommendation-card">
+            <mat-icon>directions_bike</mat-icon>
+            <p>Fomentar transporte sustentable (ciclovías)</p>
+          </div>
+          <div class="recommendation-card">
+            <mat-icon>alt_route</mat-icon>
+            <p>Añadir rutas exprés para mejorar eficiencia</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

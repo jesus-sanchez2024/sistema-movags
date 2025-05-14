@@ -1,0 +1,257 @@
+@use '@angular/material' as mat;
+
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #f5f7fa;
+  padding: 20px;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+
+  h1 {
+    color: rgba(23, 40, 59, 0.9);
+    font-size: 28px;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    .notification-btn {
+      color: rgba(23, 40, 59, 0.7);
+    }
+
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: rgba(23, 40, 59, 0.9);
+      font-weight: 500;
+
+      mat-icon {
+        font-size: 32px;
+        width: 32px;
+        height: 32px;
+      }
+    }
+  }
+}
+
+.filters-card {
+  background-color: white;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  .filter-group {
+    flex: 1;
+    max-width: 250px;
+  }
+
+  .apply-btn {
+    background-color: rgba(23, 40, 59, 0.9);
+    color: white;
+    border-radius: 8px;
+    padding: 0 16px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    &:hover {
+      background-color: rgba(23, 40, 59, 1);
+    }
+  }
+}
+
+.dashboard-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(23, 40, 59, 0.9);
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 16px;
+
+  mat-icon {
+    color: rgba(23, 40, 59, 0.7);
+  }
+}
+
+.main-section {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+
+  @media (max-width: 1200px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.map-container, .stats-container {
+  background-color: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  height: 100%;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+  transition: transform 0.2s;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .stat-icon {
+    background-color: rgba(23, 40, 59, 0.1);
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    mat-icon {
+      color: rgba(23, 40, 59, 0.9);
+    }
+  }
+
+  .stat-content {
+    flex: 1;
+
+    h3 {
+      color: rgba(23, 40, 59, 0.7);
+      font-size: 14px;
+      font-weight: 500;
+      margin: 0 0 4px 0;
+    }
+
+    .stat-value {
+      color: rgba(23, 40, 59, 0.9);
+      font-size: 20px;
+      font-weight: 600;
+      margin: 0;
+
+      span {
+        font-size: 14px;
+        font-weight: 400;
+      }
+    }
+
+    .stat-trend {
+      font-size: 12px;
+      margin-top: 4px;
+
+      &.positive {
+        color: #4caf50;
+      }
+
+      &.negative {
+        color: #f44336;
+      }
+
+      &.neutral {
+        color: #ff9800;
+      }
+    }
+  }
+}
+
+.charts-section {
+  background-color: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.bottom-section {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+
+  @media (max-width: 1200px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tables-container {
+  background-color: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.recommendations-container {
+  background-color: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.recommendations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.recommendation-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  transition: all 0.2s;
+
+  &:hover {
+    background-color: rgba(23, 40, 59, 0.05);
+    transform: translateX(4px);
+  }
+
+  mat-icon {
+    color: rgba(23, 40, 59, 0.7);
+    margin-top: 2px;
+  }
+
+  p {
+    margin: 0;
+    color: rgba(23, 40, 59, 0.9);
+    font-size: 14px;
+    line-height: 1.4;
+  }
+}

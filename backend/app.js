@@ -6,6 +6,8 @@ const percepcionesRoutes = require('./routes/percepcionesRoutes');
 const tecnologiaRoutes = require('./routes/tecnologiaRoutes');
 const gpxRoutes = require('./routes/gpxRoutes');
 const authRoutes = require('./routes/authRoutes');
+const zonasRoutes = require('./routes/zonasRoutes');
+
 
 // Inicializar Express
 const app = express();
@@ -21,6 +23,7 @@ app.use('/api/percepciones', percepcionesRoutes); // Cambiado a /api/percepcione
 app.use('/api/tecnologia', tecnologiaRoutes); // Cambiado a /api/tecnologia
 app.use('/api/gpx', gpxRoutes); // Cambiado a /api/gpx
 app.use('/api/auth', authRoutes);
+app.use('/api/zonas', zonasRoutes);
 
 // Exportar la app
 module.exports = app;
